@@ -85,3 +85,93 @@ docker ps
 
 #### Docker Desktop
 ![](/images/docker-desktop.png)
+
+## Update the source code
+
+Build update một version image mới, sử dụng lệnh `docker build`.
+```
+docker build -t getting-started .
+```
+
+Sau khi build lại thì start lại service
+```
+docker run -dp 127.0.0.1:3000:3000 getting-started
+```
+
+## Dừng Container đang chạy - Xóa container
+
+1. Lấy ID của container bằng command
+```
+docker ps
+```
+
+2. Sử dụng lệnh `docker stop` để stop một container đang chạy. `<the-container-id>` lấy từ docker ps
+```
+docker stop <the-container-id>
+```
+
+3. Khi container dừng thì có thể xóa conatiner đó bằng lệnh `docker rm`
+```
+docker rm <the-container-id>
+```
+
+(*) Có thể thực hiện dừng container và xóa container cùng một lệnh bằng cách thêm `force`
+```
+docker rm -f <the-container-id>
+```
+
+## List image đang có
+```
+docker image ls
+```
+
+## Chia sẽ Image
+
+Sau khi tạo được Image, bạn có thể chia sẻ nó. Để chia sẻ image Docker, bạn phải sử dụng Docker registry. registry mặc định là Docker Hub và là nơi chứa tất cả các image bạn đã sử dụng
+
+#### Create a repository 
+To push an image, you first need to create a repository on Docker Hub.
+
+1. Vào Docker Hub.
+
+2. Chọn nút `Create Repository`.
+
+3. For the repository name, use `getting-started`. Make sure the `Visibility` is `Public`.
+
+4. Select `Create`.
+
+Trong hình ảnh bên dưới là ví dụ để đây tag mới vào repository Docker Hub vừa tạo bằng command:
+![](/images/push-repo-docker.png)
+
+#### Push the image
+
+1. Chọn tag image để push lên Hub repository getting-started bằng cách Kiểm tra trên local repo có những images nào bằng lệnh
+```
+docker image ls
+```
+2. Đăng nhập vào Docker Hub trên command bằng lệnh
+```
+docker login -u YOUR-USER-NAME
+```
+3. Sử dụng `docker tage` để đặt lại tên mới cho image getting-started. Thay thế `YOUR-USER-NAME` bằng ID Docker của bạn.
+```
+docker tag getting-started YOUR-USER-NAME/getting-started
+```
+4. Bây giờ hãy chạy lại lệnh `docker push`. Nếu bạn đang sao chép giá trị từ Docker Hub, bạn có thể bỏ phần `:tagname` vì bạn chưa thêm tag vào tên image. Nếu bạn không chỉ định tag, Docker sẽ sử dụng thẻ có tên mới nhất.
+```
+docker push YOUR-USER-NAME/getting-started
+```
+
+## Chạy Docker Image trên Docker Play
+
+Docker Play dùng để run image trên môi trường kết nối network. Việc này có thể giúp build 1 sản phẩm demo cho khách hàng test.
+
+![](/images/docker-play-1.png)
+
+## Persist the DB 
+Quay lại xem vấn đề này sau
+
+## Use bind mounts
+Quay lại xem vấn đề này sau
+
+
