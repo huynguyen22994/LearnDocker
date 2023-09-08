@@ -168,6 +168,14 @@ Docker Play dùng để run image trên môi trường kết nối network. Vi�
 
 ![](/images/docker-play-1.png)
 
+## Persist the DB 
+Dùng để tách dữ liệu trong container ra lưu riêng để khi update lại một image và run lại không mất dữ liệu. Do mỗi docker container là một không gian độc lập không liên quan đến các container khác nên khi remove và run lại dữ liệu lưu trong file container đó sẽ bị xóa
+
+## Docker volumes
+Để giải quyết vấn đề Persist Data, thì dùng volumes để giải quyết. 
+
+![](/images/docker-volumn.png)
+
 ## Những lệnh Docker thường dùng
 
 ```
@@ -200,6 +208,7 @@ Có thể kéo một image trên hub về chạy với lệnh run Ví dụ run r
 > docker rm -f <the-container-id>
 
 # Access vào cmd của một contain để thao tác lệnh trên Docker
+> docker exec -it < Tên Container hoặc ID >
 > docker exec -it < Tên Container hoặc ID > sh
 ví dụ:
 > docker exec -it rdb sh
@@ -209,15 +218,11 @@ ví dụ:
 
 ```
 
-## Persist the DB 
-Quay lại xem vấn đề này sau
-
 ## Use bind mounts
 Quay lại xem vấn đề này sau
 
 ## Docker Compose
 ## Docker Servies
 ## Docker Swarm
-## Docker volumes
 ## Docker network
 
