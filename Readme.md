@@ -168,10 +168,56 @@ Docker Play dùng để run image trên môi trường kết nối network. Vi�
 
 ![](/images/docker-play-1.png)
 
+## Những lệnh Docker thường dùng
+
+```
+# Kiểm tra version docker
+> docker -v
+
+# Kiểm tra container đang chạy
+> docker ps
+
+# Chạy một image
+> docker run -dp 127.0.0.1:3000:3000 <Tên Image>
+hoặc gán lại tên khi chạy để dể thao tác với tên thay vì ID
+> docker run --name <Tên Muốn Đặt Khi Run> -dp 127.0.0.1:3000:3000 <Tên Images Đang Có>
+Có thể kéo một image trên hub về chạy với lệnh run Ví dụ run redis như sau
+> docker run --name rdb -dp 6379:6379 redis
+
+# Stop một container đang chạy bằng name hoặc ID
+> docker stop <Tên Khi Chạy hoặc Image ID>
+
+# Build image cho container
+> docker build -t <Image Name> .
+
+# Xem danh sách những Images đang có
+> docker images
+
+# Xóa một image
+> docker rm <the-container-id>
+
+# Xóa một image ngay khi đang chạy với force
+> docker rm -f <the-container-id>
+
+# Access vào cmd của một contain để thao tác lệnh trên Docker
+> docker exec -it < Tên Container hoặc ID > sh
+ví dụ:
+> docker exec -it rdb sh
+
+# Để kiểm tra image trên hub của các tool cài cho docker có thể dùng lệnh
+> docker search < từ khóa image muốn tìm kiếm >
+
+```
+
 ## Persist the DB 
 Quay lại xem vấn đề này sau
 
 ## Use bind mounts
 Quay lại xem vấn đề này sau
 
+## Docker Compose
+## Docker Servies
+## Docker Swarm
+## Docker volumes
+## Docker network
 
