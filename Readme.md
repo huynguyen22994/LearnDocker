@@ -172,9 +172,43 @@ Docker Play dùng để run image trên môi trường kết nối network. Vi�
 Dùng để tách dữ liệu trong container ra lưu riêng để khi update lại một image và run lại không mất dữ liệu. Do mỗi docker container là một không gian độc lập không liên quan đến các container khác nên khi remove và run lại dữ liệu lưu trong file container đó sẽ bị xóa
 
 ## Docker volumes
-Để giải quyết vấn đề Persist Data, thì dùng volumes để giải quyết. 
+Để giải quyết vấn đề Persist Data, thì dùng volumes để giải quyết. Docker cho phép tạo một ổ đĩa riêng biệt với container bằng lệnh CLI hoặc Docker Desktop. 
 
 ![](/images/docker-volumn.png)
+
+Sử dụng Docker Volume
+```
+1. Tạo một volumn
+> docker volume create todo-db
+
+2. Dừng và xóa conatiner ứng dụng việc cần làm một lần nữa bằng `docker rm -f <id>` vì nó vẫn đang chạy mà không sử dụng ổ đĩa liên tục.
+> docker rm -f <id>
+
+3. Khởi động container sử dụng volume, thêm tùy chọn --mount để chỉ định volumn gắn kết. Đặt tên cho volumn và gắn nó vào `/etc/todos` trong container, nơi ghi lại tất cả các tệp được tạo tại đường dẫn.
+> docker run -dp 127.0.0.1:3000:3000 --mount type=volume,src=todo-db,target=/etc/todos getting-started
+
+(*) trong các trường hợp sau này nếu có sử dụng volume muốn start lại một container sừ dụng volum thì phải thêm option --mount
+```
+
+#### Đi sau vào cấu trúc volume:
+
+Rất nhiều người thường xuyên hỏi "Docker lưu trữ dữ liệu của tôi ở đâu khi tôi sử dụng ổ đĩa?" Nếu muốn biết, bạn có thể sử dụng lệnh kiểm tra âm lượng docker.
+```
+> docker volume inspect todo-db
+[
+    {
+        "CreatedAt": "2023-09-09T06:24:51Z",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/todo-db/_data",
+        "Name": "todo-db",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+```
+`Mountpoint` là vị trí thực tế của dữ liệu trên đĩa. Lưu ý rằng trên hầu hết các máy, bạn sẽ cần có quyền truy cập root để truy cập thư mục này từ máy chủ.
+
 
 ## Những lệnh Docker thường dùng
 
