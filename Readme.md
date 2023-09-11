@@ -368,6 +368,49 @@ Cài đặt một số biến môi trường để kết nối MySQL.
 ```
 Bảng của bạn sẽ trông khác vì nó có các mục của bạn. Tuy nhiên, bạn sẽ thấy chúng được lưu trữ ở đó.
 
+## Docker Compose
+Docker Compose là một công cụ giúp bạn xác định và chia sẻ các ứng dụng nhiều containers. Với Compose, bạn có thể tạo tệp YAML để xác định các dịch vụ và chỉ bằng một lệnh duy nhất, bạn có thể xoay mọi thứ lên hoặc chia nhỏ tất cả.
+
+Ưu điểm lớn của việc sử dụng Compose là bạn có thể xác định ngăn xếp ứng dụng của mình trong một tệp, giữ nó ở thư mục gốc của kho dự án (hiện đã được kiểm soát phiên bản) và dễ dàng cho phép người khác đóng góp cho dự án của bạn. Ai đó chỉ cần sao chép kho lưu trữ của bạn và khởi động ứng dụng bằng Compose.
+![](/images/docker-compose.png)
+
+### Bắt đầu tạo một Compose
+Để thực hiện Docker Compose việc đầu tiên là tạo file .yaml ở root source để ghi cách lệnh cho Docker `compose.yaml`
+
+File `compose.yaml`
+```
+services:
+  app:
+    image: node:18-alpine
+    command: sh -c "yarn install && yarn run dev"
+    ports:
+      - 127.0.0.1:3000:3000
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: secret
+      MYSQL_DB: todos
+
+  mysql:
+    image: mysql:8.0
+    volumes:
+      - todo-mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: todos
+
+volumes:
+  todo-mysql-data:
+```
+
+Để run file compose chạy lệnh
+```
+> docker compose up -d
+```
+
 ## Những lệnh Docker thường dùng
 
 ```
@@ -376,6 +419,9 @@ Bảng của bạn sẽ trông khác vì nó có các mục của bạn. Tuy nhi
 
 # Kiểm tra container đang chạy
 > docker ps
+
+# Kiểm tra tất cả container đang có kể cả không chạy
+> docker ps -a
 
 # Chạy một image
 > docker run -dp 127.0.0.1:3000:3000 <Tên Image>
@@ -432,9 +478,10 @@ ví dụ:
 > docker inspect <container ID>
 > docker inspect <container id> | findstr "IPAddress"
 
-```
+# Run Compose
+> docker compose up -d
 
-## Docker Compose
+```
 ## Docker Servies
 ## Docker Swarm
 
