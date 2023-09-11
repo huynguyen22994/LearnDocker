@@ -209,6 +209,164 @@ Rất nhiều người thường xuyên hỏi "Docker lưu trữ dữ liệu c�
 ```
 `Mountpoint` là vị trí thực tế của dữ liệu trên đĩa. Lưu ý rằng trên hầu hết các máy, bạn sẽ cần có quyền truy cập root để truy cập thư mục này từ máy chủ.
 
+## Docker bind mounts
+Bind Mount là một loại gắn kết giữ thư mục trong container và máy chủ, cho phép bạn chia sẻ thư mục từ hệ thống tệp của máy chủ vào conatiner. Khi làm việc trên một ứng dụng, bạn có thể sử dụng bind mount để gắn mã nguồn vào container. Container sẽ nhìn thấy những thay đổi bạn thực hiện đối với mã ngay lập tức, ngay khi bạn lưu tệp. Điều này có nghĩa là bạn có thể chạy các quy trình trong container để theo dõi các thay đổi của hệ thống tệp và phản hồi chúng.
+
+![](/images/docker-bind-mounts.png)
+
+Ví Dụ dùng bind mount cho getting-started (dùng nodemon để server tự restart)
+
+```
+1. Chạy lệnh
+> docker run -it --mount type=bind,src="$(pwd)",target=/src ubuntu bash
+(*) --mount yêu cầu Docker tạo một bind mount, trong đó src là thư mục làm việc hiện tại trên máy chủ của bạn (ứng dụng bắt đầu) và target là nơi thư mục đó sẽ xuất hiện bên trong container (/src).
+
+2. Sau khi chạy lệnh, Docker bắt đầu phiên bash tương tác trong thư mục gốc của hệ thống tệp của vùng chứa.
+> root@710fcdd0b1d4:/# ls
+> bin  boot  dev  etc  home  lib  lib32  lib64  libx32  media  mnt  opt  proc  root  run  sbin  src  srv  sys  tmp  usr  var
+
+3. cd vào folder src
+> root@710fcdd0b1d4:/# cd src
+> root@710fcdd0b1d4:/src# ls
+> Readme.md  getting-started-app  images
+
+4. Tạo file trong container để xem ngoài source code của host có file mới tạo không
+> root@710fcdd0b1d4:/src# touch myfile.txt
+(ảnh bên dưới)
+
+=> Nếu folder mount trong container thay đổi thì file system của host cũng thay đổi và ngược lại (Nếu dùng bind mount)
+```
+
+![](/images/bind-mount-1.png)
+
+### Chạy container trên môi trường development
+
+Các bước để dev trên container 
+- Mount your source code into the container
+- Install all dependencies
+- Start nodemon to watch for filesystem changes
+
+Xem cách thực hiện tại đây:
+https://docs.docker.com/get-started/06_bind_mounts/
+
+
+## Docker network
+Bây giờ sẽ thêm MySQL vào ngăn xếp ứng dụng. Câu hỏi sau đây thường được đặt ra - "MySQL sẽ chạy ở đâu? Cài đặt nó trong cùng một vùng chứa hay chạy riêng?" Nói chung mỗi container nên làm một việc và làm tốt. Sau đây là một số lý do để chạy vùng chứa riêng biệt:
+
+![](/images/docker-networks-split.jpg)
+
+### Tạo một container chạy MySQL
+Quay lại ví dụ getting-started. Giờ chúng ta sẽ tách container getting-started ra chạy riêng và conatiner MySQL chạy riêng. Và dùng nettwork kết nối chúng lại.
+Để tạo một container MySQL với network có thể dùng 2 cách:
+
+    1. Chỉ định mạng khi khởi động container.
+    2. Kết nối một container đang chạy tới một mạng
+
+Theo các bước sau để Tạo một mạng rồi chỉ định container MySQl đến mạng đó khi khởi động
+
+1. Tạo network
+```
+> docker network create todo-app
+```
+
+2. Bắt đầu một container MySQL và gán nó vào network. Bạn cũng sẽ xác định một số biến môi trường mà cơ sở dữ liệu sẽ sử dụng để khởi tạo cơ sở dữ liệu.
+```
+> docker run -d `
+    --network todo-app --network-alias mysql `
+    -v todo-mysql-data:/var/lib/mysql `
+    -e MYSQL_ROOT_PASSWORD=secret `
+    -e MYSQL_DATABASE=todos `
+    mysql:8.0
+```
+
+3. Để xác nhận rằng bạn đã thiết lập và chạy cơ sở dữ liệu, hãy kết nối với cơ sở dữ liệu và xác minh rằng nó kết nối.
+```
+> docker exec -it <mysql-container-id> mysql -u root -p
+
+and then run
+> mysql> SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
+| todos              |
++--------------------+
+5 rows in set (0.01 sec)
+```
+4. Thoát khỏi shell MySQL để quay lại shell trên máy của bạn.
+```
+mysql> exit
+```
+### Kết nối tới MySQL
+Các container sẽ chạy các Ip khác nhau.
+
+1. Sử dụng container mới dùng image nicolaka/netshoot. Để đảm bảo rằng các container có chung một mạng
+```
+> docker run -it --network todo-app nicolaka/netshoot
+```
+2. Bên trong vùng chứa, bạn sẽ sử dụng lệnh dig, đây là một công cụ DNS hữu ích. Bạn sẽ tra cứu địa chỉ IP cho tên máy chủ mysql.
+```
+> dig mysql
+; <<>> DiG 9.18.13 <<>> mysql
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 26083
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;mysql.                         IN      A
+
+;; ANSWER SECTION:
+mysql.                  600     IN      A       172.18.0.2
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.11#53(127.0.0.11) (UDP)
+;; WHEN: Mon Sep 11 02:58:25 UTC 2023
+;; MSG SIZE  rcvd: 44
+```
+Mặc dù mysql thường không phải là tên máy chủ hợp lệ nhưng Docker có thể phân giải nó thành địa chỉ IP của container có network alias. Hãy nhớ rằng trước đó bạn đã sử dụng --network-alias.
+Điều này có nghĩa là ứng dụng của bạn chỉ cần kết nối với máy chủ có tên mysql và nó sẽ giao tiếp với cơ sở dữ liệu.
+
+### Chạy app getting-started với MySQL
+Cài đặt một số biến môi trường để kết nối MySQL.
+- MYSQL_HOST - the hostname for the running MySQL server
+- MYSQL_USER - the username to use for the connection
+- MYSQL_PASSWORD - the password to use for the connection
+- MYSQL_DB - the database to use once connected
+
+1. Đứng tại source code getting-started và run command
+```
+> docker run -dp 127.0.0.1:3000:3000 `
+  -w /app -v "$(pwd):/app" `
+  --network todo-app `
+  -e MYSQL_HOST=mysql `
+  -e MYSQL_USER=root `
+  -e MYSQL_PASSWORD=secret `
+  -e MYSQL_DB=todos `
+  node:18-alpine `
+  sh -c "yarn install && yarn run dev"
+```
+
+2. Để vào xem log container mới start
+```
+> docker logs -f <container-id>
+```
+3. Mở chrome vào port 3000 trên local và test app
+4. Vào container mysql xem dữ liệu
+```
+> docker exec -it <mysql-container-id> mysql -p todos
+
+> mysql> select * from todo_items;
++--------------------------------------+----------+-----------+
+| id                                   | name     | completed |
++--------------------------------------+----------+-----------+
+| 68e5335b-039b-4af3-8a7c-a87c9693fd1d | huy test |         0 |
++--------------------------------------+----------+-----------+
+```
+Bảng của bạn sẽ trông khác vì nó có các mục của bạn. Tuy nhiên, bạn sẽ thấy chúng được lưu trữ ở đó.
 
 ## Những lệnh Docker thường dùng
 
@@ -225,6 +383,8 @@ hoặc gán lại tên khi chạy để dể thao tác với tên thay vì ID
 > docker run --name <Tên Muốn Đặt Khi Run> -dp 127.0.0.1:3000:3000 <Tên Images Đang Có>
 Có thể kéo một image trên hub về chạy với lệnh run Ví dụ run redis như sau
 > docker run --name rdb -dp 6379:6379 redis
+Chạy với volume
+> docker run -dp 127.0.0.1:3000:3000 --mount type=volume,src=todo-db,target=/etc/todos getting-started
 
 # Stop một container đang chạy bằng name hoặc ID
 > docker stop <Tên Khi Chạy hoặc Image ID>
@@ -250,13 +410,31 @@ ví dụ:
 # Để kiểm tra image trên hub của các tool cài cho docker có thể dùng lệnh
 > docker search < từ khóa image muốn tìm kiếm >
 
-```
+# Tạo một volumn
+> docker volume create todo-db
 
-## Use bind mounts
-Quay lại xem vấn đề này sau
+# Inspect một volume
+> docker volume inspect todo-db
+
+# Xem log một container đang chạy
+> docker logs -f <id || name>
+
+# Sử dụng bind mount cho container
+> docker run -it --mount type=bind,src="$(pwd)",target=/src ubuntu bash
+
+# Tạo network
+> docker network create todo-app
+
+# List danh sách network
+> docker network ls
+
+# Check Ip của một container
+> docker inspect <container ID>
+> docker inspect <container id> | findstr "IPAddress"
+
+```
 
 ## Docker Compose
 ## Docker Servies
 ## Docker Swarm
-## Docker network
 
