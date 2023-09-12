@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  frontend:
+    build: 
+      context: .
+    ports:
+      - 80:80
+    volumes:
+      - ./dist:/usr/share/nginx/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+
+  backend:
+    build:
+      context: ../getting-started-app/.
+    ports:
+      - 3000:3000     
+    expose:
+      - 3000  
+
+# docker compose -p frontend up -d    
